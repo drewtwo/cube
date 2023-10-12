@@ -16,7 +16,7 @@ enum Animation
 
 int pins[] = {D0, D1, D2, D3, D4, D5, D6, D7, A0, A1, A2, A3, A4, A5, A6, A7};
 
-int allVariantsOld[27][3] =
+int allColorsOld[27][3] =
     {
         {0, 0, 1},
         {0, 1, 0},
@@ -53,18 +53,24 @@ int allVariantsOld[27][3] =
         {1, 1, 1},
         {2, 2, 2}};
 
-int allVariants[10][3] =
+int allColors[10][3] =
     {
-        {0, 0, 0},  // red
         {0, 0, 1},  // yellow green
         {0, 1, 1},  // green yellow
         {1, 1, 1},  // green
         {1, 1, 2},  // green blue
         {1, 2, 2},  // blue green
         {2, 2, 2},  // blue
-        {0, 0, 2},  // purple
-        {0, 2, 2},  // deeper purple
+        {0, 2, 2},  // bluish purple
+        {0, 0, 2},  // reddish purple
+        {0, 0, 0},  // red
         {0, 1, 2}}; // white
+
+int primaryColors[3][3] =
+    {
+        {0, 0, 0},
+        {1, 1, 1},
+        {2, 2, 2}};
 
 int red[4][4][4][2] = {
     {{{D3, D7}, {A7, D3}, {A3, A7}, {D7, A3}},

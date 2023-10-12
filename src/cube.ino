@@ -4,9 +4,10 @@
 
 unsigned long microDelay = 10;
 unsigned long lastLoopTime = 0;
-unsigned long loopTime = 140;
+unsigned long loopTime = 200;
 unsigned long lastAnimationChange = 0;
 unsigned long animationChange = 60000;
+unsigned long now = 0;
 
 bool continuePattern = true;
 
@@ -34,12 +35,11 @@ int grid[4][4][4][3] = {
      {{4, 4, 4}, {4, 4, 4}, {4, 4, 4}, {4, 4, 4}},
      {{4, 4, 4}, {4, 4, 4}, {4, 4, 4}, {4, 4, 4}}}};
 
-Animation currentAnimation = planarSpinAnimation;
+Animation currentAnimation = crazyFollowColorsAnimation;
 
 void setup()
 {
   // Particle.function("countUp", countUp);
-  // Particle.function("countUpOld", countUpOld);
   // Particle.function("lightIt", lightIt);
   // Particle.function("drawLineAPI", drawLineAPI);
   // Particle.function("planarSpin", planarSpin);
@@ -57,6 +57,9 @@ void loop()
 
 void setCurrentAnimation()
 {
+  loopTime = 200;
+  microDelay = 50;
+  animationChange = 60000;
   switch (currentAnimation)
   {
   case countUpAnimation:
@@ -94,7 +97,7 @@ void setCurrentAnimation()
 
 void checkAnimationChange()
 {
-  unsigned long now = millis();
+  now = millis();
   if ((now - lastAnimationChange) >= animationChange)
   {
     resetGrid();
@@ -112,7 +115,7 @@ void checkAnimationChange()
 
 void setupAndRunTimedLoop()
 {
-  unsigned long now = millis();
+  now = millis();
   while ((now - lastLoopTime) <= loopTime)
   {
     rgbMainLoop();
@@ -142,18 +145,18 @@ void rgbMainLoop()
 
 int drawWalls(String cmd)
 {
-  ypos = ypos == 0 ? ypos = 3 : ypos - 1;
+  ypos = ypos == 0 ? 3 : ypos - 1;
   if (ypos == 3)
   {
-    color = color > 8 ? 0 : color + 1;
+    color = nextColor(color);
   }
   for (int x = 0; x < 4; x++)
   {
     for (int z = 0; z < 4; z++)
     {
-      grid[x][ypos][z][0] = allVariants[color][0];
-      grid[x][ypos][z][1] = allVariants[color][1];
-      grid[x][ypos][z][2] = allVariants[color][2];
+      grid[x][ypos][z][0] = allColors[color][0];
+      grid[x][ypos][z][1] = allColors[color][1];
+      grid[x][ypos][z][2] = allColors[color][2];
     }
   }
   return 1;
@@ -163,23 +166,23 @@ int drawXRow(String cmd)
 {
   int y = random(0, 4);
   int z = random(0, 4);
-  color = color > 8 ? 0 : color + 1;
+  color = nextColor(color);
   if (sscanf(cmd, "%d, %d, %d", &y, &z, &color) == 3)
   {
     for (int x = 0; x < 4; x++)
     {
-      grid[x][y][z][0] = allVariants[color][0];
-      grid[x][y][z][1] = allVariants[color][1];
-      grid[x][y][z][2] = allVariants[color][2];
+      grid[x][y][z][0] = allColors[color][0];
+      grid[x][y][z][1] = allColors[color][1];
+      grid[x][y][z][2] = allColors[color][2];
     }
   }
   else
   {
     for (int x = 0; x < 4; x++)
     {
-      grid[x][y][z][0] = allVariants[color][0];
-      grid[x][y][z][1] = allVariants[color][1];
-      grid[x][y][z][2] = allVariants[color][2];
+      grid[x][y][z][0] = allColors[color][0];
+      grid[x][y][z][1] = allColors[color][1];
+      grid[x][y][z][2] = allColors[color][2];
     }
   }
   return 1;
@@ -189,23 +192,23 @@ int drawYRow(String cmd)
 {
   int x = random(0, 4);
   int z = random(0, 4);
-  color = color > 8 ? 0 : color + 1;
+  color = nextColor(color);
   if (sscanf(cmd, "%d, %d, %d", &x, &z, &color) == 3)
   {
     for (int y = 0; y < 4; y++)
     {
-      grid[x][y][z][0] = allVariants[color][0];
-      grid[x][y][z][1] = allVariants[color][1];
-      grid[x][y][z][2] = allVariants[color][2];
+      grid[x][y][z][0] = allColors[color][0];
+      grid[x][y][z][1] = allColors[color][1];
+      grid[x][y][z][2] = allColors[color][2];
     }
   }
   else
   {
     for (int y = 0; y < 4; y++)
     {
-      grid[x][y][z][0] = allVariants[color][0];
-      grid[x][y][z][1] = allVariants[color][1];
-      grid[x][y][z][2] = allVariants[color][2];
+      grid[x][y][z][0] = allColors[color][0];
+      grid[x][y][z][1] = allColors[color][1];
+      grid[x][y][z][2] = allColors[color][2];
     }
   }
   return 1;
@@ -215,14 +218,14 @@ int drawZRow(String cmd)
 {
   int x = random(0, 4);
   int y = random(0, 4);
-  color = color > 8 ? 0 : color + 1;
+  color = nextColor(color);
   if (sscanf(cmd, "%d, %d, %d", &x, &y, &color) == 3)
   {
     for (int z = 0; z < 4; z++)
     {
-      grid[x][y][z][0] = allVariants[color][0];
-      grid[x][y][z][1] = allVariants[color][1];
-      grid[x][y][z][2] = allVariants[color][2];
+      grid[x][y][z][0] = allColors[color][0];
+      grid[x][y][z][1] = allColors[color][1];
+      grid[x][y][z][2] = allColors[color][2];
       ;
     }
   }
@@ -230,9 +233,9 @@ int drawZRow(String cmd)
   {
     for (int z = 0; z < 4; z++)
     {
-      grid[x][y][z][0] = allVariants[color][0];
-      grid[x][y][z][1] = allVariants[color][1];
-      grid[x][y][z][2] = allVariants[color][2];
+      grid[x][y][z][0] = allColors[color][0];
+      grid[x][y][z][1] = allColors[color][1];
+      grid[x][y][z][2] = allColors[color][2];
       ;
     }
   }
@@ -260,16 +263,16 @@ int lightIt(String cmd)
 
 int drawWholeCube(String cmd)
 {
-  color = color > 8 ? 0 : color + 1;
+  color = nextColor(color);
   for (int x = 0; x < 4; x++)
   {
     for (int y = 0; y < 4; y++)
     {
       for (int z = 0; z < 4; z++)
       {
-        grid[x][y][z][0] = allVariants[color][0];
-        grid[x][y][z][1] = allVariants[color][1];
-        grid[x][y][z][2] = allVariants[color][2];
+        grid[x][y][z][0] = allColors[color][0];
+        grid[x][y][z][1] = allColors[color][1];
+        grid[x][y][z][2] = allColors[color][2];
       }
     }
   }
@@ -278,16 +281,17 @@ int drawWholeCube(String cmd)
 
 int crazyFollowColors(String cmd)
 {
+  loopTime = 300;
   for (int x = 0; x < 4; x++)
   {
     for (int y = 0; y < 4; y++)
     {
       for (int z = 0; z < 4; z++)
       {
-        color = color > 8 ? 0 : color + 1;
-        grid[x][y][z][0] = allVariants[color][0];
-        grid[x][y][z][1] = allVariants[color][1];
-        grid[x][y][z][2] = allVariants[color][2];
+        grid[x][y][z][0] = allColors[color][0];
+        grid[x][y][z][1] = allColors[color][1];
+        grid[x][y][z][2] = allColors[color][2];
+        color = nextColor(color);
       }
     }
   }
@@ -382,12 +386,15 @@ void planarSpin()
   drawLine(color, 3, ypos, 1, 0, 3 - ypos, 1);
   drawLine(color, 3, ypos, 2, 0, 3 - ypos, 2);
   drawLine(color, 3, ypos, 3, 0, 3 - ypos, 3);
-  if (planarSpinLoops > 10)
+  if (planarSpinLoops > 12)
   {
     planarSpinLoops = 0;
     color = nextColor(color);
   }
-  planarSpinLoops++;
+  else
+  {
+    planarSpinLoops++;
+  }
 }
 
 int planarFlop3D(String cmd)
@@ -527,13 +534,13 @@ void chaseTheDot()
     zpos--;
     break;
   }
-  if (std::equal(std::begin(grid[xpos][ypos][zpos]), std::end(grid[xpos][ypos][zpos]), std::begin(allVariants[color])))
+  if (std::equal(std::begin(grid[xpos][ypos][zpos]), std::end(grid[xpos][ypos][zpos]), std::begin(allColors[color])))
   {
-    color = color > 8 ? 0 : color + 1;
+    color = nextColor(color);
   }
-  grid[xpos][ypos][zpos][0] = allVariants[color][0];
-  grid[xpos][ypos][zpos][1] = allVariants[color][1];
-  grid[xpos][ypos][zpos][2] = allVariants[color][2];
+  grid[xpos][ypos][zpos][0] = allColors[color][0];
+  grid[xpos][ypos][zpos][1] = allColors[color][1];
+  grid[xpos][ypos][zpos][2] = allColors[color][2];
 }
 
 void checkResetGrid()
@@ -626,9 +633,9 @@ void drawLine(int color, int startx, int starty, int startz, int endx, int endy,
       zpos = roundClosest(((longest - i) * delz), longest) + startz;
     else
       zpos = roundClosest((i * delz), longest) + startz;
-    grid[xpos][ypos][zpos][0] = allVariants[color][0];
-    grid[xpos][ypos][zpos][1] = allVariants[color][1];
-    grid[xpos][ypos][zpos][2] = allVariants[color][2];
+    grid[xpos][ypos][zpos][0] = allColors[color][0];
+    grid[xpos][ypos][zpos][1] = allColors[color][1];
+    grid[xpos][ypos][zpos][2] = allColors[color][2];
   }
 
   if (reverseX)
@@ -637,26 +644,26 @@ void drawLine(int color, int startx, int starty, int startz, int endx, int endy,
     swapint(starty, endy);
   if (reverseZ)
     swapint(startz, endz);
-  grid[endx][endy][endz][0] = allVariants[color][0];
-  grid[endx][endy][endz][1] = allVariants[color][1];
-  grid[endx][endy][endz][2] = allVariants[color][2];
+  grid[endx][endy][endz][0] = allColors[color][0];
+  grid[endx][endy][endz][1] = allColors[color][1];
+  grid[endx][endy][endz][2] = allColors[color][2];
 }
 
 int countUp(String cmd)
 {
-  if (color < 10)
+  if (color < 3)
   {
-    grid[xpos][ypos][zpos][0] = allVariants[color][0];
-    grid[xpos][ypos][zpos][1] = allVariants[color][1];
-    grid[xpos][ypos][zpos][2] = allVariants[color][2];
+    grid[xpos][ypos][zpos][0] = primaryColors[color][0];
+    grid[xpos][ypos][zpos][1] = primaryColors[color][1];
+    grid[xpos][ypos][zpos][2] = primaryColors[color][2];
     color++;
   }
   else
   {
+    color = 0;
     grid[xpos][ypos][zpos][0] = 4;
     grid[xpos][ypos][zpos][1] = 4;
     grid[xpos][ypos][zpos][2] = 4;
-    color = 0;
     zpos++;
     if (zpos > 3 && ypos >= 3 && xpos >= 3)
     {
