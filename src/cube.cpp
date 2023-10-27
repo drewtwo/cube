@@ -18,30 +18,35 @@ int drawXRow(String cmd);
 int drawYRow(String cmd);
 int drawZRow(String cmd);
 int lightIt(String cmd);
+int resetIt(String cmd);
 int drawWholeCube(String cmd);
 int crazyFollowColors(String cmd);
-void drawLed(int x, int y, int z, int color);
-void resetLed(int x, int y, int z, int color);
 int drawLineAPI(String cmd);
 void planarSpin();
+void fountain();
+void tunnel();
 int planarFlop3D(String cmd);
 void chaseTheDot();
 void checkResetGrid();
 void resetGrid();
 void drawLine(int color, int startx, int starty, int startz, int endx, int endy, int endz);
+void drawBoxWalls(int startx, int starty, int startz, int endx, int endy, int endz, int color);
 int countUp(String cmd);
+void drawLed(int x, int y, int z, int color);
+void resetLed(int x, int y, int z, int color);
 void set_pins(int low_pin, int high_pin);
 void reset_pins(int low_pin, int high_pin);
 void reset_all_pins();
 #line 5 "/Users/drewowl/workspace/cube/src/cube.ino"
 unsigned long microDelay = 10;
 unsigned long lastLoopTime = 0;
-unsigned long loopTime = 200;
+unsigned long loopTime = 100;
 unsigned long lastAnimationChange = 0;
 unsigned long animationChange = 60000;
 unsigned long now = 0;
 
-bool continuePattern = true;
+bool haltAnimation = false;
+bool continuePattern = false;
 
 int color = 0;
 int xpos = 0;
@@ -67,12 +72,13 @@ int grid[4][4][4][3] = {
      {{4, 4, 4}, {4, 4, 4}, {4, 4, 4}, {4, 4, 4}},
      {{4, 4, 4}, {4, 4, 4}, {4, 4, 4}, {4, 4, 4}}}};
 
-Animation currentAnimation = crazyFollowColorsAnimation;
+Animation currentAnimation = drawWholeCubeAnimation;
 
 void setup()
 {
   // Particle.function("countUp", countUp);
-  // Particle.function("lightIt", lightIt);
+  Particle.function("lightIt", lightIt);
+  Particle.function("resetIt", resetIt);
   // Particle.function("drawLineAPI", drawLineAPI);
   // Particle.function("planarSpin", planarSpin);
   // Particle.function("planarFlop3D", planarFlop3D);
@@ -82,7 +88,10 @@ void setup()
 
 void loop()
 {
-  setCurrentAnimation();
+  if (!haltAnimation)
+  {
+    setCurrentAnimation();
+  }
   checkAnimationChange();
   setupAndRunTimedLoop();
 }
@@ -124,6 +133,12 @@ void setCurrentAnimation()
   case crazyFollowColorsAnimation:
     crazyFollowColors("");
     break;
+  case fountainAnimation:
+    fountain();
+    break;
+  case tunnelAnimation:
+    tunnel();
+    break;
   }
 }
 
@@ -132,15 +147,16 @@ void checkAnimationChange()
   now = millis();
   if ((now - lastAnimationChange) >= animationChange)
   {
+    haltAnimation = false;
     resetGrid();
     lastAnimationChange = now;
-    if (currentAnimation == drawZRowAnimation)
+    if (currentAnimation == tunnelAnimation)
     {
       currentAnimation = chaseTheDotAnimation;
     }
     else
     {
-      currentAnimation = static_cast<Animation>((currentAnimation + 1) % 9);
+      currentAnimation = static_cast<Animation>((currentAnimation + 1) % 11);
     }
   }
 }
@@ -177,6 +193,7 @@ void rgbMainLoop()
 
 int drawWalls(String cmd)
 {
+  animationChange = 10000;
   ypos = ypos == 0 ? 3 : ypos - 1;
   if (ypos == 3)
   {
@@ -196,6 +213,7 @@ int drawWalls(String cmd)
 
 int drawXRow(String cmd)
 {
+  animationChange = 10000;
   int y = random(0, 4);
   int z = random(0, 4);
   color = nextColor(color);
@@ -222,6 +240,7 @@ int drawXRow(String cmd)
 
 int drawYRow(String cmd)
 {
+  animationChange = 10000;
   int x = random(0, 4);
   int z = random(0, 4);
   color = nextColor(color);
@@ -248,6 +267,7 @@ int drawYRow(String cmd)
 
 int drawZRow(String cmd)
 {
+  animationChange = 10000;
   int x = random(0, 4);
   int y = random(0, 4);
   color = nextColor(color);
@@ -276,35 +296,39 @@ int drawZRow(String cmd)
 
 int lightIt(String cmd)
 {
+  haltAnimation = true;
   int x = 0;
   int y = 0;
   int z = 0;
   int color = 0;
   if (sscanf(cmd, "%d, %d, %d, %d", &x, &y, &z, &color) == 4)
   {
-    resetLed(x, y, z, grid[x][y][z][0]);
-    resetLed(x, y, z, grid[x][y][z][1]);
-    resetLed(x, y, z, grid[x][y][z][2]);
-    // drawLed(x, y, z, color);
-    grid[x][y][z][0] = color;
-    grid[x][y][z][1] = color;
-    grid[x][y][z][2] = color;
+    grid[x][y][z][0] = allColors[color][0];
+    grid[x][y][z][1] = allColors[color][1];
+    grid[x][y][z][2] = allColors[color][2];
   }
+  return 1;
+}
+
+int resetIt(String cmd)
+{
+  resetGrid();
   return 1;
 }
 
 int drawWholeCube(String cmd)
 {
-  color = nextColor(color);
+  // animationChange = 10000;
+  color = nextPrimaryColor(color);
   for (int x = 0; x < 4; x++)
   {
     for (int y = 0; y < 4; y++)
     {
       for (int z = 0; z < 4; z++)
       {
-        grid[x][y][z][0] = allColors[color][0];
-        grid[x][y][z][1] = allColors[color][1];
-        grid[x][y][z][2] = allColors[color][2];
+        grid[x][y][z][0] = primaryColors[color][0];
+        grid[x][y][z][1] = primaryColors[color][1];
+        grid[x][y][z][2] = primaryColors[color][2];
       }
     }
   }
@@ -328,64 +352,6 @@ int crazyFollowColors(String cmd)
     }
   }
   return 1;
-}
-
-void drawLed(int x, int y, int z, int color)
-{
-  int pin1 = 0;
-  int pin2 = 0;
-  switch (color)
-  {
-  case 0:
-    pin1 = red[x][y][z][0];
-    pin2 = red[x][y][z][1];
-    set_pins(pin1, pin2);
-    break;
-  case 1:
-    pin1 = green[x][y][z][0];
-    pin2 = green[x][y][z][1];
-    set_pins(pin1, pin2);
-    break;
-  case 2:
-    pin1 = blue[x][y][z][0];
-    pin2 = blue[x][y][z][1];
-    set_pins(pin1, pin2);
-    break;
-  default:
-    pin1 = red[x][y][z][0];
-    pin2 = red[x][y][z][1];
-    reset_pins(pin1, pin2);
-    pin1 = green[x][y][z][0];
-    pin2 = green[x][y][z][1];
-    reset_pins(pin1, pin2);
-    pin1 = blue[x][y][z][0];
-    pin2 = blue[x][y][z][1];
-    reset_pins(pin1, pin2);
-  }
-}
-
-void resetLed(int x, int y, int z, int color)
-{
-  int pin1 = 0;
-  int pin2 = 0;
-  switch (color)
-  {
-  case 0:
-    pin1 = red[x][y][z][0];
-    pin2 = red[x][y][z][1];
-    reset_pins(pin1, pin2);
-    break;
-  case 1:
-    pin1 = green[x][y][z][0];
-    pin2 = green[x][y][z][1];
-    reset_pins(pin1, pin2);
-    break;
-  default:
-    pin1 = blue[x][y][z][0];
-    pin2 = blue[x][y][z][1];
-    reset_pins(pin1, pin2);
-    break;
-  }
 }
 
 int drawLineAPI(String cmd)
@@ -429,6 +395,70 @@ void planarSpin()
   }
 }
 
+bool fountainUp = true;
+int fountainZ = 0;
+void fountain()
+{
+  loopTime = 50;
+  if (fountainUp)
+  {
+    drawBoxWalls(1, 1, fountainZ, 2, 2, fountainZ, color);
+    fountainZ++;
+    if (fountainZ > 3)
+    {
+      fountainZ = 3;
+      fountainUp = !fountainUp;
+    }
+  }
+  else
+  {
+    drawBoxWalls(0, 0, fountainZ, 3, 3, fountainZ, color);
+    fountainZ--;
+    if (fountainZ < 0)
+    {
+      fountainZ = 0;
+      fountainUp = !fountainUp;
+      color = nextColor(color);
+    }
+  }
+}
+
+int tunnelIndex[] = {0, 1, 2, 3, 4, 5, 6, 7};
+void tunnel()
+{
+  loopTime = 50;
+  int color1[] = {0, 0, 0, 0, 2, 2, 2, 2};
+  int color2[] = {2, 2, 2, 2, 0, 0, 0, 0};
+
+  drawBoxWalls(1, 1, 0, 2, 2, 0, color1[tunnelIndex[0]]);
+  drawBoxWalls(1, 1, 0, 2, 2, 0, color1[tunnelIndex[0]]);
+  drawBoxWalls(1, 1, 0, 2, 2, 0, color2[tunnelIndex[0]]);
+  drawBoxWalls(1, 1, 1, 2, 2, 1, color1[tunnelIndex[1]]);
+  drawBoxWalls(1, 1, 1, 2, 2, 1, color2[tunnelIndex[1]]);
+  drawBoxWalls(1, 1, 2, 2, 2, 2, color1[tunnelIndex[2]]);
+  drawBoxWalls(1, 1, 2, 2, 2, 2, color2[tunnelIndex[2]]);
+  drawBoxWalls(1, 1, 3, 2, 2, 3, color1[tunnelIndex[3]]);
+
+  drawBoxWalls(1, 1, 3, 2, 2, 3, color2[tunnelIndex[3]]);
+  drawBoxWalls(0, 0, 3, 3, 3, 3, color1[tunnelIndex[4]]);
+  drawBoxWalls(0, 0, 3, 3, 3, 3, color2[tunnelIndex[4]]);
+  drawBoxWalls(0, 0, 2, 3, 3, 2, color1[tunnelIndex[5]]);
+  drawBoxWalls(0, 0, 2, 3, 3, 2, color2[tunnelIndex[5]]);
+  drawBoxWalls(0, 0, 1, 3, 3, 1, color1[tunnelIndex[6]]);
+  drawBoxWalls(0, 0, 1, 3, 3, 1, color2[tunnelIndex[6]]);
+  drawBoxWalls(0, 0, 0, 3, 3, 0, color1[tunnelIndex[7]]);
+  drawBoxWalls(0, 0, 0, 3, 3, 0, color2[tunnelIndex[7]]);
+
+  for (int i = 0; i < 8; i++)
+  {
+    // index[i] = index[i]==7?0:index[i]+1;
+    tunnelIndex[i] = (tunnelIndex[i] + 1) % 8;
+  }
+}
+
+int flopX = 0;
+int flopY = 0;
+int flopZ = 0;
 int planarFlop3D(String cmd)
 {
   int color = 0;
@@ -681,6 +711,42 @@ void drawLine(int color, int startx, int starty, int startz, int endx, int endy,
   grid[endx][endy][endz][2] = allColors[color][2];
 }
 
+void drawBoxWalls(int startx, int starty, int startz, int endx, int endy, int endz, int color)
+{
+  if (startx > endx)
+    swapint(startx, endx);
+  if (starty > endy)
+    swapint(starty, endy);
+  if (startz > endz)
+    swapint(startz, endz);
+
+  for (int i = startz; i <= endz; i++)
+  {
+    // draw y walls
+    for (int j = starty; j <= endy; j++)
+    {
+      grid[startx][j][i][0] = allColors[color][0];
+      grid[startx][j][i][1] = allColors[color][1];
+      grid[startx][j][i][2] = allColors[color][2];
+
+      grid[endx][j][i][0] = allColors[color][0];
+      grid[endx][j][i][1] = allColors[color][1];
+      grid[endx][j][i][2] = allColors[color][2];
+    }
+    // draw x walls
+    for (int j = startx; j <= endx; j++)
+    {
+      grid[j][starty][i][0] = allColors[color][0];
+      grid[j][starty][i][1] = allColors[color][1];
+      grid[j][starty][i][2] = allColors[color][2];
+
+      grid[j][endy][i][0] = allColors[color][0];
+      grid[j][endy][i][1] = allColors[color][1];
+      grid[j][endy][i][2] = allColors[color][2];
+    }
+  }
+}
+
 int countUp(String cmd)
 {
   if (color < 3)
@@ -688,6 +754,9 @@ int countUp(String cmd)
     grid[xpos][ypos][zpos][0] = primaryColors[color][0];
     grid[xpos][ypos][zpos][1] = primaryColors[color][1];
     grid[xpos][ypos][zpos][2] = primaryColors[color][2];
+    grid[3 - xpos][3 - ypos][3 - zpos][0] = primaryColors[color][0];
+    grid[3 - xpos][3 - ypos][3 - zpos][1] = primaryColors[color][1];
+    grid[3 - xpos][3 - ypos][3 - zpos][2] = primaryColors[color][2];
     color++;
   }
   else
@@ -696,6 +765,9 @@ int countUp(String cmd)
     grid[xpos][ypos][zpos][0] = 4;
     grid[xpos][ypos][zpos][1] = 4;
     grid[xpos][ypos][zpos][2] = 4;
+    grid[3 - xpos][3 - ypos][3 - zpos][0] = 4;
+    grid[3 - xpos][3 - ypos][3 - zpos][1] = 4;
+    grid[3 - xpos][3 - ypos][3 - zpos][2] = 4;
     zpos++;
     if (zpos > 3 && ypos >= 3 && xpos >= 3)
     {
@@ -716,6 +788,64 @@ int countUp(String cmd)
     }
   }
   return 1;
+}
+
+void drawLed(int x, int y, int z, int color)
+{
+  int pin1 = 0;
+  int pin2 = 0;
+  switch (color)
+  {
+  case 0:
+    pin1 = red[x][y][z][0];
+    pin2 = red[x][y][z][1];
+    set_pins(pin1, pin2);
+    break;
+  case 1:
+    pin1 = green[x][y][z][0];
+    pin2 = green[x][y][z][1];
+    set_pins(pin1, pin2);
+    break;
+  case 2:
+    pin1 = blue[x][y][z][0];
+    pin2 = blue[x][y][z][1];
+    set_pins(pin1, pin2);
+    break;
+  default:
+    pin1 = red[x][y][z][0];
+    pin2 = red[x][y][z][1];
+    reset_pins(pin1, pin2);
+    pin1 = green[x][y][z][0];
+    pin2 = green[x][y][z][1];
+    reset_pins(pin1, pin2);
+    pin1 = blue[x][y][z][0];
+    pin2 = blue[x][y][z][1];
+    reset_pins(pin1, pin2);
+  }
+}
+
+void resetLed(int x, int y, int z, int color)
+{
+  int pin1 = 0;
+  int pin2 = 0;
+  switch (color)
+  {
+  case 0:
+    pin1 = red[x][y][z][0];
+    pin2 = red[x][y][z][1];
+    reset_pins(pin1, pin2);
+    break;
+  case 1:
+    pin1 = green[x][y][z][0];
+    pin2 = green[x][y][z][1];
+    reset_pins(pin1, pin2);
+    break;
+  default:
+    pin1 = blue[x][y][z][0];
+    pin2 = blue[x][y][z][1];
+    reset_pins(pin1, pin2);
+    break;
+  }
 }
 
 void set_pins(int low_pin, int high_pin)

@@ -10,7 +10,9 @@ enum Animation
     drawXRowAnimation,
     drawYRowAnimation,
     drawZRowAnimation,
-    planarSpinAnimation
+    fountainAnimation,
+    planarSpinAnimation,
+    tunnelAnimation,
     // planarFlopAnimation
 };
 
